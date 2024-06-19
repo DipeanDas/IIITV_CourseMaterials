@@ -1,0 +1,304 @@
+\documentclass[11pt]{article}
+\usepackage[hmargin=1in,vmargin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsfonts,url,sectsty,framed,tcolorbox,framed} 
+\usepackage[justification=centering]{caption}
+\usepackage[labelformat=empty]{caption}
+\usepackage{draftwatermark}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\newcommand{\pf}{{\bf Proof: }}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+\newcommand{\qed}{\hfill \rule{2mm}{2mm}}
+\SetWatermarkText{\textcolor{gray!10}{202151188}}
+\SetWatermarkScale{4}
+
+\begin{document}
+\setcounter{section}{0}
+\noindent
+\rule{\textwidth}{1pt}
+\begin{center}
+{\bf [CS304] Introduction to Cryptography and Network Security}
+\end{center}
+Course Instructor: Dr. Dibyendu Roy \hfill Winter 2023-2024\\
+Scribed by: Dipean Dasgupta (202151188) \hfill Lecture 12,13,14 (Week 7,8)
+\\
+\rule{\textwidth}{1pt}
+\section{Hash Function:}
+In the field of cryptography, a hash function is a mathematical process that accepts an input, or "message," and outputs a fixed-length string of bytes, usually in the form of a hash value or hash code. Often called a digest, the output is a distinct representation of the input data. Fast and effective hash functions offer a safe and dependable means of confirming the integrity of data, authenticating communications, and creating digital signatures. \\
+\text{A hash family is a four-tuple }(X, Y, K, H), \text{ where the following conditions are satisfied:} \\
+1. X \text{ is a set of possible messages.} \\
+2. Y \text{ is a finite set of possible message digests or authentication tags (or just tags)} \\
+3. K, \text{the keyspace, is a finite set of possible keys.} \\
+4. \text{For each } k \in K, \text{ there is a hash function } $h_k$\in H. \text{ Each } $h_k: X \rightarrow Y.$\\\\
+While $Y$ is always a finite set in the definition above, $&$ may not always be a finite or set. The function is sometimes referred to as a compression function if $X$ is a finite set and $X > Y$. In this case, we'll assume the more favourable circumstance. $|X| > 2|3|$. \\\\
+A function $h: X \to Y$, where $X$ and $Y$ are the same is an unkeyed hash function. An unkeyed hash function can be conceptualised as a hash family where $|K| = 1$, or one with a single potential key. The output of an unkeyed hash function is commonly referred to as a "message digest," while the output of a keyed hash function is referred to as a "tag." \\\\
+If $h(x) = y$, then a pair $(x, y) = X \times Y$ is considered legitimate under a hash function $h$. In this case, $h$ may be an unkeyed or keyed hash function. In this chapter, we mainly cover techniques to stop an opponent from creating specific kinds of valid pairs.\\\\
+Let $F_{X,Y}$ denote the set of all functions from $X$ to $Y$. Suppose that $|X| = N$ and $|Y| = M$. Then it is clear that $|F_{X,Y}| = M^N$. (This follows because, for each of the $N$ possible inputs $x \in X$, there are $M$ possible values for the corresponding output $h(x) = y$.) Any hash family $F$ consisting of functions with domain $X$ and range $Y$ can be considered to be a subset of $F_{X,Y}$, i.e., $F \subseteq F_{X,Y}$. Such a hash family is termed an $(N, M)$-hash family.\\\\
+\textbf{Security of Hash Functions:}\\
+Assume that the hash function $h: X -> Y$ is unkeyed. Define $y = h(x)$, given $x \in X$. It is desirable in many cryptographic applications of hash functions that the only method to generate a valid pair $(x, y)$ is to compute $y = h(x)$ by applying the function h to x first.\\
+In total, three problems are defined; if a hash function is to be
+considered secure, it should be the case that these three problems are difficult to solve.\\
+\newpage
+\textbf{Preimage}\\
+Instance: $A$ hash function $h : X \rightarrow Y$ and an element $y \in Y.$\\
+Find: $x \in X$ such that $h(x) = y.$\\
+The issue Preimage asks whether an element $x \in X$ can be found such that h(x) = y given a (possible) message digest y. A value x of that kind would be a preimage of y.A pair (x, y) is legitimate if Preimage can be solved for a given $y \in Y$. One term for a hash function that is one-way or preimage resistant is that it cannot be solved effectively using Preimage.\\
+\begin{algorithm}
+\caption{FIND-PREIMAGE(h, y, Q)}
+\label{alg:find-preimage}
+\textbf{Input:}\\
+     $h$: A hash function.\hspace{5pt}$y$: The output value.
+     \hspace{5pt}$Q$: The size of the set.\\
+\textbf{Output:}
+\begin{itemize}
+    \item An element $x \in X$ such that $h(x) = y$.
+    \item "failure" if no such element exists.
+\end{itemize}
+
+1. Choose any subset $X_0 \subseteq X$ such that $|X_0| = Q$.\\
+2. For each $x \in X_0$ do:\\    
+        If $h(x) = y$, then return $x$.    
+3. Return "failure".
+\end{algorithm}\\
+\textbf{Second Preimage}\\
+Instance: $A$ hash function $h : X \rightarrow Y$ and an element $x \in X.$\\
+Find: $x' \in X$ such that $x' \neq x$ and $h(x') = h(x).$\\
+The Second Preimage problem asks if $x' \neq x$ can be discovered such that h(x') = h(x), given a message x. The goal is to identify a value x' that would be a second preimage of y. Here, we start with x, which is a preimage of y. Keep in mind that (x', h(x)) is an acceptable pair if this can be accomplished. It is common to refer to a hash function as second preimage resistant when it is incapable of being solved efficiently for Second Preimage.\\
+\begin{algorithm}
+\caption{FIND-SECOND-PREIMAGE(h, x, Q)}
+\label{alg:find-second-preimage}
+\textbf{Input:}\\
+     $h$: A hash function.\hspace{5pt}$x$: element in domain $h$:
+     \hspace{5pt}$Q$: The size of the set.\\
+\textbf{Output:}
+\begin{itemize}
+    \item An element $x_0 \in X \setminus \{x\}$ such that $h(x_0) = h(x)$.
+    \item "failure" if no such element exists.
+\end{itemize}
+1. $y \leftarrow h(x)$\\
+2. Choose $X_0 \subseteq X \backslash \{x\}$ such that $|X_0| = Q-1$.\\
+3. For each $x_0 \in X_0$ do:
+         If $h(x_0) = y$, then return $x_0$.\\   
+4. Return "failure".
+\end{algorithm}\\
+\textbf{Collision}\\
+Instance: $A$ hash function $h : X \rightarrow Y.$\\
+Find: $x, x' \in X$ such that $x' \neq x$ and $h(x') = h(x).$\\
+The issue The collision problem asks if there is any pair of different inputs, x, x', such that h(x') = h(x).  Two legitimate pairs, (x, y) and (x', y), where y = h(x) = h(x'), are produced as a solution to this problem. There are several situations in which we would like to prevent this kind of thing from happening. It's common to refer to a hash function as collision-resistant when Collision cannot be addressed effectively.\\
+\begin{algorithm}
+\caption{FIND-COLLISION(h, Q)}
+\label{alg:find-collision}
+\textbf{Input:}
+     $h$: A hash function.\hspace{5pt}  $Q$: The size of the set.\\
+\textbf{Output:}
+\begin{itemize}
+    \item A pair of elements $(x, x')$ such that $h(x) = h(x')$ and $x \neq x'$.
+    \item "failure" if no such pair exists.
+\end{itemize}
+1. Choose a set $X_0 \subseteq X$ such that $|X_0| = Q$.\\
+2. For each $x \in X_0$ do:\\    
+        Let $y_x \leftarrow h(x)$.\\
+        If there exists $y_x = y_x'$ for some $x'\neq x$\\
+        then return $(x, x')$.\\    
+3. Return "failure".\\\\
+\end{algorithm}\\
+\textbf{Compression Function:}\\
+$h:{0,1}^(m+t)\rightarrow {0,1}^n$\\
+$Second preimage,preimage\rightarrow O(2^m)$\\
+$Collision\rightarrow O(2^(m/2)$\\
+\begin{algorithm}
+\caption{Compress}
+\label{alg:iterated-hash}
+Suppose that Compress: $ \{0, 1\}^(m+t) -> \{0, 1\}^m$ is a compression function.\\
+\textbf{Input:}
+\begin{itemize}
+    \item $x$ : An input string of length greater than m + t + 1.
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+    \item $h(x)$ : The hash value of the input string $x$.
+\end{itemize}
+\textbf{Process}
+\begin{itemize}
+    \item Pad $x$ with 0s to get a string $y$ with a length divisible by $t$.
+    \item Let $y = y_1 || y_2 || ... || y_r$ where each $y_i$ has length $t$ (except possibly the last one).
+    \item Initialize $z_0 \leftarrow IV$.\\
+            For $i = 1$ to $r$ do:\\
+        $z_i \leftarrow compress(z_{i - 1} || y_i)$
+        
+\end{itemize}
+\end{algorithm}
+\newpage
+\textbf{Merkle-Damgard construction}\\
+  Merkle-Damgard construction has the property that the resulting hash function satisfies desirable security properties, such as collision resistance provided that the compression function does. It helps in constructing a hash function from a compression function.\\
+  Suppose $Compress: \{0, 1\}^(m+t) -> \{0, 1\}^m$ is a collision resistant compression function, where t >= 1. So compress takes m + t input bits and produces m output bits.We will use compress to construct a collision resistant hash function $h: X \rightarrow {0, 1}^m$;the hash function h takes any finite bitstring of length at least m + t + 1 and creates a message digest that is a bitstring of length m.\\
+\begin{algorithm}
+\caption{MERKLE-DAMGÅRD(x)}
+\label{alg:merkle-damgard}
+\textbf{external compress}\\
+\textbf{comment:} compress: $\{0,1\}^{m+t}\rightarrow\{0,1\}^{m}$ where $t\ge2$
+\begin{algorithmic}[1]
+\State $n\leftarrow |x|$
+\State $k\leftarrow \lfloor n/(t-1) \rfloor$ \\
+\State $d\leftarrow k(t-1)-n$
+\For {$i \leftarrow 1$ \textbf{to} $k$}
+    \State $yi \leftarrow Xi$
+\EndFor
+\State $Y_k\leftarrow X_k || O^d$
+\State $y_{k+1} \leftarrow  the binary representation of d$
+\State $z_{1}\leftarrow0^{m+1}||y_{1}$
+\State $z_1 \leftarrow 0^{m+1} || y_1$
+\State $compress(z_1)$
+\For {$i \leftarrow 1$ \textbf{to} $k$}
+    \State $Z_i+1\leftarrow Z_i || 1 || Y_i+1$
+    \State $compress(Z_i+1)$
+\EndFor
+\\$h(x)\leftarrow g_{k+1}$
+\State return $(h(x))$
+\end{algorithmic}
+\end{algorithm}\\
+\textbf{Secure Hash Algorithm(SHA)}\\
+\textbf{SHA1}\\
+SHA-1 (Secure Hash Algorithm 1) is a cryptographic hash function that takes an input message of arbitrary length and produces a fixed-length output, known as a message digest. The output is a 160-bit (20-byte) value that is typically represented as a hexadecimal number that is 40 digits long.\\
+
+\textbf{Algorithm}\\
+The SHA-1 algorithm consists of four main steps: preprocessing, processing, concatenation, and formatting.\\
+\textbf{Preprocessing}\\
+The input message is padded and divided into blocks of a fixed length (512 bits).\\
+\textbf{Processing}\\
+Each block is processed in 80 rounds, using a series of bitwise operations, modular arithmetic, and logical functions to produce a series of intermediate hash values.\\
+\begin{algorithm}
+\caption{SHA-1 Processing}
+\begin{algorithmic}[1]
+\Procedure{ProcessBlock}{$block$}
+\State $h_0 \gets H_0$
+\State $h_1 \gets H_1$
+\State $h_2 \gets H_2$
+\State $h_3 \gets H_3$
+\State $h_4 \gets H_4$
+\For{$i = 0$ to $79$}
+\State $W_i \gets \text{Expand}(W_{i-3}, W_{i-2}, W_{i-1})$
+\State $T_i \gets \text{CircularShift}(W_i, 1) + \text{CircularShift}(W_i, 8) + \text{CircularShift}(W_i, 14) + \text{CircularShift}(W_i, 16)$
+\State $T_i \gets (T_i + f_i(h_{i-3}, h_{i-2}, h_{i-1}) + h_i + K_i) \mod 2^{32}$
+\State $h_i \gets h_{i-4} + T_i$
+\EndFor
+\State \Return $h_0, h_1, h_2, h_3, h_4$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}\\\\
+In the processing step, the following functions are used:
+\begin{itemize}
+\item $W_i = \text{Expand}(W_{i-3}, W_{i-2}, W_{i-1})$: This function expands a 32-bit value into a 32-bit value using a series of bitwise operations.
+\item $T_i = \text{CircularShift}(W_i, s) + \text{CircularShift}(W_i, 8) + \text{CircularShift}(W_i, 14) + \text{CircularShift}(W_i, 16)$: This function performs a circular shift on a 32-bit value by a certain number of bits ($s$).
+\item $f_i(h_{i-3}, h_{i-2}, h_{i-1})$: This function performs a logical operation on three 32-bit values.
+\item $K_i$: This is a constant value that is used in the processing step.
+\end{itemize}
+Concatenation:\\
+The intermediate hash values are concatenated to produce the final message digest.\\\\
+\textbf{Message Authentication Code(MAC)}\\
+A Message Authentication Code (MAC) is a short piece of information used to authenticate a message and verify its integrity. A MAC is generated by using a shared secret key between the sender and receiver, and it is sent along with the message. When the message is received, the receiver generates its own MAC using the same algorithm and shared key, and compares it to the MAC received with the message. If the two MACs match, the message is authenticated and its integrity is verified.\\
+\textbf{HMAC}\\
+HMAC (Hash-based Message Authentication Code) is a specific type of MAC that uses a cryptographic hash function, such as SHA-1, as its underlying hash function. The HMAC algorithm is defined as follows:
+
+$$\text{HMAC} = H((K \oplus \text{opad}) || H((K \oplus \text{ipad}) || M))$$
+
+where $K$ is the secret key, $M$ is the message, $\oplus$ denotes bitwise XOR, $\text{ipad}$ and $\text{opad}$ are fixed padding values, and $H$ is the cryptographic hash function.
+
+\begin{algorithm}
+\caption{HMAC}
+\begin{algorithmic}[1]
+\Procedure{HMAC}{$K, M$}
+\State $\text{ipad} \gets \text{0x36} \ldots \text{0x36}$
+\State $\text{opad} \gets \text{0x5c} \ldots \text{0x5c}$
+\State $K' \gets K \oplus \text{ipad}$
+\State $K'' \gets K \oplus \text{opad}$
+\State $M' \gets H(K', M)$
+\State $M'' \gets H(K'', M')$
+\State \Return $M''$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{CBC-MAC}\\
+
+CBC-MAC (Cipher Block Chaining: Message Authentication Code) is another type of MAC that uses a block cipher, such as AES, in CBC mode to generate the MAC. The CBC-MAC algorithm is defined as follows:
+
+$$\text{CBC-MAC}(K, M) = E_K(E_K(\ldots E_K(E_K(IV) \oplus M_1) \oplus M_2) \oplus \ldots) \oplus M_n$$
+
+where $K$ is the secret key, $M$ is the message divided into $n$ blocks, $E_K$ denotes encryption with the block cipher using key $K$, and $\oplus$ denotes bitwise XOR. The IV (Initialization Vector) is a fixed value or a random value that is used to initialize the CBC mode.
+\begin{algorithm}
+\caption{CBC-MAC}
+\begin{algorithmic}[1]
+\Procedure{CBC-MAC}{$K, M$}
+\State $IV \gets \text{fixed value or random value}$
+\State $C \gets IV$
+\For{$i = 1$ to $n$}
+\State $C \gets E_K(C \oplus M_i)$
+\EndFor
+\State \Return $C$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+\textbf{SHA-256}\\
+SHA-256 (Secure Hash Algorithm 256-bit) is a cryptographic hash function that takes an input message of arbitrary length and produces a fixed-length output, known as a message digest. The output is a 256-bit (32-byte) value that is typically represented as a hexadecimal number that is 64 digits long. The algorithm is designed to be deterministic, meaning that the same input will always produce the same output, and to be resistant to various types of attacks, such as collisions and preimage attacks.\\
+
+\textbf{Algorithm}\\
+The SHA-256 algorithm consists of four main steps: preprocessing, processing, concatenation, and formatting.\\
+\textbf{Preprocessing}\\
+The input message is padded and divided into blocks of a fixed length (512 bits).\\
+\textbf{Processing}\\
+Each block is processed in 64 rounds, using a series of bitwise operations, modular arithmetic, and logical functions to produce a series of intermediate hash values.\\
+\begin{algorithm}
+\caption{SHA-256 Processing}
+\begin{algorithmic}[1]
+\Procedure{ProcessBlock}{$block$}
+\State $h_0 \gets H_0$
+\State $h_1 \gets H_1$
+\State $h_2 \gets H_2$
+\State $h_3 \gets H_3$
+\State $h_4 \gets H_4$
+\State $h_5 \gets H_5$
+\State $h_6 \gets H_6$
+\State $h_7 \gets H_7$
+\For{$i = 0$ to $63$}
+\State $W_i \gets \text{Expand}(W_{i-2}, W_{i-15}, W_{i-16})$
+\State $T_1 \gets \text{Sigma1}(e_i) + \text{Ch}(e_{i-2}, e_{i-15}, e_{i-16}) + e_{i-6} + K_i$
+\State $T_2 \gets \text{Sigma0}(a_i) + \text{Maj}(a_{i-1}, a_{i-2}, a_{i-3}) + a_{i-7} + K'_i$
+\State $T_1 \gets T_1 + T_2$
+\State $T_3 \gets \text{CircularShift}(T_1, 1) + \text{CircularShift}(T_1, 8) + \text{CircularShift}(T_1, 16) + \text{CircularShift}(T_1, 24)$
+\State $T_3 \gets T_3 + T_1$
+\State $a_i \gets d_i + T_3$
+\State $e_i \gets c_i$
+\State $c_i \gets b_i$
+\State $b_i \gets a_i$
+\State $d_i \gets T_3$
+\EndFor
+\State \Return $h_0, h_1, h_2, h_3, h_4, h_5, h_6, h_7$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+In the processing step, the following functions are used:
+\begin{itemize}
+\item $W_i = \text{Expand}(W_{i-2}, W_{i-15}, W_{i-16})$: This function expands a 32-bit value into a 32-bit value using a series of bitwise operations.
+\item $T_1 = \text{Sigma1}(e_i) + \text{Ch}(e_{i-2}, e_{i-15}, e_{i-16}) + e_{i-6} + K_i$: This function performs a series of bitwise operations and modular arithmetic on the $e$ values.
+\item $T_2 = \text{Sigma0}(a_i) + \text{Maj}(a_{i-1}, a_{i-2}, a_{i-3}) + a_{i-7} + K'_i$: This function performs a series of bitwise operations and modular arithmetic on the $a$ values.
+\item $T_3 = \text{CircularShift}(T_1, 1) + \text{CircularShift}(T_1, 8) + \text{CircularShift}(T_1, 16) + \text{CircularShift}(T_1, 24)$: This function performs a circular shift on a 32-bit value by a certain number of bits.
+\item $\text{Sigma1}(x) = \text{CircularShift}(x, 19) + \text{CircularShift}(x, 61) + \text{CircularShift}(x, 6)$
+\item $\text{Sigma0}(x) = \text{CircularShift}(x, 28) + \text{CircularShift}(x, 2) + x$
+\item $\text{Ch}(x, y, z) = (x \wedge y) \oplus (\neg x \wedge z)$
+\item $\text{Maj}(x, y, z) = (x \wedge y) \oplus (x \wedge z) \oplus (y \wedge z)$
+\end{itemize}
+\textbf{Concatenation}\\
+The intermediate hash values are concatenated to produce the final message digest.
+
+
+\end{document}
+
+
