@@ -1,0 +1,278 @@
+\documentclass[11pt]{article}
+\usepackage[hmargin=1in,vmargin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsfonts,url,sectsty,framed,tcolorbox,framed} 
+\usepackage[justification=centering]{caption}
+\usepackage[labelformat=empty]{caption}
+\usepackage{draftwatermark}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\newcommand{\pf}{{\bf Proof: }}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+\newcommand{\qed}{\hfill \rule{2mm}{2mm}}
+\SetWatermarkText{\textcolor{gray!10}{202151188}}
+\SetWatermarkScale{4}
+
+\begin{document}
+\setcounter{section}{0}
+\noindent
+\rule{\textwidth}{1pt}
+\begin{center}
+{\bf [CS304] Introduction to Cryptography and Network Security}
+\end{center}
+Course Instructor: Dr. Dibyendu Roy \hfill Winter 2023-2024\\
+Scribed by: Dipean Dasgupta (202151188) \hfill Lecture 15,16 (Week 9)
+\\
+\rule{\textwidth}{1pt}
+\section{RSA (Rivest Shamir Adleman) Encryption}
+RSA (Rivest-Shamir-Adleman) is a widely used public-key cryptosystem for secure data transmission. It is named after its inventors, Ron Rivest, Adi Shamir, and Leonard Adleman, who introduced it in 1977. \\
+It is the first public key encryption algorithm.RSA is based on the mathematical properties of large prime numbers. Before beginning any discussion on RSA encryption, let's first recall a few concepts.
+\begin{itemize}
+    \item The number of integers less than n that are co-prime to n, or the number of x such that gcd(x, n) = 1 where $1 \leq x \leq n-1$, is indicated by the Euler's Totient Function $\phi(n)$. $\phi(8) = 4, \{1, 3,5,7\}]$, for instance, is co-prime to 8. Also, we know,
+    \begin{center}
+        $\phi(p) = p-1,$ if p is prime\\
+        \vspace{1mm}
+        $\phi(p^k) = p^k(1 - \frac{1}{p})$
+    \end{center}
+    \item Let there be a set $S = \{x$ mod m$\}$ such that $|S| = m$.
+    \begin{center}
+        $S = \{r_1, r_2,\hdots, r_m\}$
+    \end{center}
+    Every element in the set S is distinct; typically, they range from 0 to m-1. Let $a$ be an integer for which $gcd(a, m) = 1$. Suppose there exists an additional set $S_1$ such that,
+    \begin{center}
+        $S_1 = \{ar_1$ mod $m, ar_2$ mod m$,\hdots, ar_m$ mod $m\}$
+    \end{center}
+    $\{ar_1$ mod $m, ar_2$ mod m$,\hdots, ar_m$ mod $m\}$ will also be $m$ unique elements since $\{r_1, r_2,\hdots, r_m\}$ are distinct elements and gcd(a, m) = 1. Contradiction can be used to demonstrate this. Assume that for every $r_i \neq r_j$, $ar_i = ar_j$. Consequently,
+    \begin{center}
+        $ar_i \equiv ar_j$ mod $m$
+    \end{center}
+ $1 = ab + ms$ since gcd(a, m) = 1 (from Bezout's Identity). Therefore, $ab \equiv 1$ mod m exists for some integer $b$. We refer to the value of b as the multiplicative inverse of $a$, and the Extended Euclidean Algorithm can be used to find it.
+    As a result, multiplying both sides of the preceding equation by b yields,
+    \begin{center}
+        $b\cdot a\cdot r_i \equiv b\cdot a \cdot r_j$ mod $m$\\
+        \vspace{3mm}
+        $r_i \equiv r_j$ mod m    ($\because ab \equiv 1$ mod m)
+    \end{center}
+    Hence, it is a contradiction to our initial assumption that $r_i \neq r_j$. Hence, elements in the set $S_1$ will be unique iff gcd(a, m) = 1.
+    \subsection{Euler's Theorem}
+    $a^{\phi(m)}$ $\equiv$ 1 (mod m) if gcd(a, m) = 1.
+    Assuming that we have a set S, let's say that
+    \begin{center}
+        S = \{ x $|$ gcd(x, m) = 1\}\\
+        S = \{$s_1, s_2, s_3, s_4,....,s_{\phi(m)}$\}
+    \end{center}
+    Let us consider gcd(a, m) = 1 and create another set $S_1$ such that
+    \begin{center}
+        $S_1$ = \{ $as_1, as_2, as_3...,as_{\phi(m)}$ \}
+    \end{center}
+    As was mentioned in the last section, if $as_i$ $\equiv$ $as_j$ (mod m) $\Rightarrow$ $s_i$ $\equiv$ $s_j$(mod m)\\
+    Considering that $b.a \equiv 1 $ (mod m) and gcd(a, m) = 1
+    \begin{center}
+        $|S| = \phi(m)$\\
+        $|S_1| = \phi(m)$
+    \end{center}
+    Given that a and $s_i$ are co-prime with m, there has to be some correspondence between the elements of S and $S_1$.
+    \begin{center}
+        $s_i \equiv as_j$ (mod m)
+    \end{center}
+    Let us now take product on both sides,
+    \begin{center}
+        $ \prod_{i=1}^{\phi(m)} s_i   \equiv  \prod_{j=1}^{\phi(m)} as_j  (mod\ m)$ \\
+        \vspace{2mm}
+        $\Rightarrow \prod_{i=1}^{\phi(m)} s_i  \equiv  a^{\phi(m)}\prod_{j=1}^{\phi(m)} s_j  (mod\ m)$
+    \end{center}
+    As gcd($s_i$, m) = 1, each $s_i$ will have multiplicative inverse under mod m. So, after simplifying,
+    \begin{center}
+        $a^{\phi(m)} \equiv 1 ( mod\ m)$
+    \end{center}
+    \subsection{Fermat's Theorem}
+    If p is a prime number and p does not divide a(means that p is co-prime to a), then
+    \begin{center}
+        $a^{p-1} \equiv 1 (mod\ p)$
+    \end{center}
+    Using Fermat's theorem,
+    \begin{center}
+        $\Rightarrow a^p \equiv a (mod \ p)$
+    \end{center}
+    \textbf{Note:} If $p|a$(P divides a), then,
+    \begin{center}
+        a $\equiv$ 0 mod p\\
+        $\Rightarrow a^p \equiv 0 \ mod\ p$\\
+        $\Rightarrow a^p \equiv a \ mod\ p$\\
+    \end{center}
+    But the Fermat's theorem will not hold when p does not divide a.
+\end{itemize}
+\subsection{RSA Cryptosystem}
+Few facts:
+\begin{itemize}
+    \item g(a, m) = 1, then $a^{\phi(m)} \equiv 1 (mod\ m)$
+    \item $a^{p-1} \equiv 1 (mod \ p)$
+\end{itemize}
+Now, let us understand the components of RSA
+\begin{enumerate}
+    \item n = pq, where p, q are primes
+    \item Plaintext space =  ${\zbar}_n$\\
+    Ciphertext space = ${\zbar}_n$
+    \item Key space = \{K = (n,p,q,e,d) $|\ ed \equiv\ (mod \ \phi(n))$\}
+    \item Encryption:
+    \begin{center}
+        E(x, K) = c\\
+        c = E(x, K) = $x^e$(mod n)
+    \end{center}
+    \item Decryption:
+    \begin{center}
+        Dec(c, K) = x\\
+        c = Dec(c, K) = $c^d$(mod n)
+    \end{center}
+\end{enumerate}
+We know that e and d are related as:
+\begin{center}
+    ed $\equiv$ 1 mod $\phi$(n)\\
+    $\Rightarrow$ ed - 1 = t.$\phi$(n)\\
+    $\Rightarrow$ 1 = ed + $t_1$.$\phi$(n)\\
+    1 = gcd(e, $\phi$(n)) = ed + $t_1$.$\phi$(n)
+\end{center}
+\textbf{Encryption:}
+\begin{center}
+    c = $x^e$(mod n)
+\end{center}
+\textbf{Decryption:}
+\begin{center}
+    x = $c^d$(mod n)\\
+    \vspace{1mm}
+    $c^d$ = ${(x^e)}^d$ mod n\\
+    \vspace{1mm}
+    $c^d$ = $x^{ed}$ mod n\\
+    \vspace{1mm}
+    Now using ed = 1 + t.$\phi$(n) from above\\
+    \vspace{1mm}
+    $c^d$ = $x^{1+t.\phi(n)}$ mod n\\
+    \vspace{1mm}
+    $c^d$ = x.$x^{t.\phi(n)}$ mod n\\
+    \vspace{1mm}
+    Since p, q are primes and n = pq, then $\phi$(n) = (p-1)(q-1)\\
+    \vspace{1mm}
+    $c^d$ = x.$x^{t[(p-1)(q-1)]}$ mod n\\
+    \vspace{1mm}
+    Finally,
+    $c^d$ = x.$x^{t[(p-1)(q-1)]}$ mod (pq)\\
+\end{center}
+Now, simplifying the part $x^{t[(p-1)(q-1)]}$ mod (pq), where x $\in \zbar$ \\
+We check $x^{t[(p-1)(q-1)]}$ mod p,
+\begin{center}
+    $\equiv {x^{p-1}}^{t(q-1)}$ mod p\\
+    $\equiv 1 $(mod p) [As $x^{p-1} \equiv 1 mod\ p$]\\
+\end{center}
+Now we check $x^{t[(p-1)(q-1)]}$ mod q
+\begin{center}
+    $\equiv {x^{q-1}}^{t(p-1)}$ mod q\\
+    $\equiv 1 $(mod p) [As $x^{q-1} \equiv 1 mod\ q$]\\
+\end{center}
+    
+We finally have,
+\begin{center}
+    $x^{t[(p-1)(q-1)]}$ $\equiv 1 $(mod p)\\
+    \vspace{1mm}
+    $x^{t[(p-1)(q-1)]}$ $\equiv 1 $(mod q)\\
+    \vspace{1mm}
+    $\Rightarrow$ $x^{t[(p-1)(q-1)]}$ $\equiv 1 $(mod pq)\\
+\end{center}
+Substituting the result, 
+\begin{center}
+     $c^d$ = x.$x^{t[(p-1)(q-1)]}$ mod (pq)\\
+      $c^d$ = x.1 mod (pq)\\
+      $c^d$ = x mod (pq)\\
+\end{center}
+Hence, decryption is successful!\\
+
+Now let us consider a scenario where Alice is trying to communicate with Bob. Here, two keys play the main role-one is public key and the other is secret key. Here, Bob is encrypting the message and sending it to Alice and Alice has both the keys. Public key is known to Bob but the secret key is not known to Bob.\\
+\begin{center}
+    \textbf{\underline{Alice}}\\
+n = pq and p, q:large prime numbers\\
+ed $\equiv$ 1 (mod $\phi$(n))\\
+choosing e\\
+Public key of Alice = (n, e)\\
+generate d using Extended Euclidean algorithm\\
+Secret key of Alice = (p, q, d)\\
+\textbf{\underline{Bob}}\\
+Now Bob selects a message x from ${\zbar}_n$\\
+x\\
+n, e for Alice are known, so he can encrypt\\\\
+y = $x^e (mod n)$\\
+\end{center}
+
+\vspace{3mm}
+Now the message y is sent to Alice, she can decrypt it with her secret key as :
+\begin{center}
+    $x = y^d$ (mod n)
+\end{center}
+How can we find p and q in polynomial time if we were given n?\\
+Using a loop that goes from 2 to $\sqrt{n}$, we can determine if a factor has been found if each time we calculate n \% i is zero. If so, we can proceed to determine if the factor is prime. If so, we calculate q by dividing n by p. When n is big, finding the prime factors of that number is a computationally challenging problem.\\
+\textbf{Note:}We shall be able to calculate $\phi$(n) if we can calculate p,q from n. And since we already know e, the security of RSA will be compromised since we may use the extended Euclidean technique to find d. Thus, the foundation of RSA is the difficulty of the factorization problem.\\
+\subsubsection{RSA Problem}
+We have public key (n, e) and c. If from this we can find x (c = $x^e$), we will be able to break security of RSA.\\
+We have an algorithm to solve the RSA problem, i.e., it can find the decryption without the factorization. Is this true?
+\textbf{Note:} Finding the factors is not certain even if we manage to crack the RSA. But we can always break the RSA if we have the necessary elements. However, this isn't always the case. Thus, RSA is secure if two conditions are met:
+\begin{itemize}
+    \item factorization is very difficult.
+    \item decryption is very difficult.
+\end{itemize}
+\textbf{Note : } In general, public key encryption is complex due to the $x^e$ and $c^d$ operations. There are a lot of exponential operations. Thus, people typically steer clear of them.\\
+RSA is considered secure due to the difficulty of factoring large composite numbers, which is the basis of breaking the system. The security of RSA relies on the difficulty of factoring the product of two large prime numbers, which forms the public key.
+\section{Diffie  Hellman Key Exchange}
+Known as Diffie—Hellman key exchange, the first public-key algorithm was disclosed in the groundbreaking article by Diffie and Hellman that established public-key cryptography. This key exchange technology is used in many commercial goods.\\
+The algorithm's goal is to make it possible for two users to safely trade keys so that messages can be symmetrically encrypted later on. The algorithm is restricted to exchanging confidential values.\\
+The Diffie-Hellman algorithm depends for its effectiveness on the difficulty of computing discrete logarithms.A primitive root of a prime number \(p\) is one whose powers modulo \(p\) generate all the integers from 1 to \(p - 1\). That is, if \(a\) is a primitive root of the prime number \(p\), then the numbers
+\[
+a \mod p, a^2 \mod p, \ldots, a^{p-1} \mod p
+\]
+are distinct and consist of the integers from 1 through \(p - 1\) in some permutation. For any integer \(b\) and a primitive root \(a\) of prime number \(p\), we can find a unique exponent \(i\) such that
+\[
+b \equiv a^i \ (\text{mod } p) \quad \text{where } 0 \leq i < (p - 1)
+\]
+
+\textbf{Algorithm}\\
+For this scheme, there are two publicly known numbers: a prime number \(q\) and an integer \( \alpha \) that is a primitive root of \( q \). Suppose the users A and B wish to create a shared key.\\
+User A selects a random integer \( X_A < q \) and computes \( Y_A = \alpha^{X_A} \mod q \). Similarly, user B independently selects a random integer \( X_B < q \) and computes \( Y_B = \alpha^{X_B} \mod q \). Each side keeps the X value private and makes the Y value available publicly to the other side. Thus, \( X_A\) is A's private key and \( Y_A\) is A's corresponding public key, and similarly for B. User A computes the key as 
+\[ K = (Y_B)^{X_A}  mod  q\]
+and user B computes the key as 
+\[ K = (Y_A)^{X_B}  mod  q.\] 
+\newpage
+These two calculations produce identical results:\\
+\begin{align*}
+K & = (Y^b)^a \mod q \\
+& = (x^a \mod q)^a \mod q \\
+& = (x^{ab} \mod q)^a \mod q \\
+& = x^{ab} \cdot x^a \mod q & & \text{by the rules of modular arithmetic} \\
+& = (x^{ab} \cdot x^b) \mod q \\
+& = (x^{ab} + ab)  \mod q \\
+& = ((x^a  mod  q)^b)  mod  q
+\end{align*}
+
+The outcome is the exchange of a hidden value between the two parties. This secret value is typically utilized as a shared symmetric secret key. Now imagine a malicious party who is able to see the key exchange and wants to find the secret key \( K \). An enemy only has the following resources at their disposal because \(X_a\) and \(X_b\) are private: \(q, a, Y_a,\) and \( Y_b\). In order to mine the key, the opponent is thus compelled to take a discrete logarithm. For example, to determine the private key of user B, an adversary must compute
+
+\[ X_b = dlog_a(Y_b) .\]
+
+The adversary can then calculate the key \( K\) in the same manner as user B calculates it. That is, The adversary can calculate \( K\) as
+
+\[ K= (Y_a)^{X_b} mod  q .\]
+
+Because it is reasonably cheap to calculate exponentials modulo a prime, but very difficult to calculate discrete logarithms, the Diffie-Hellman key exchange is secure. The latter task is deemed unfeasible for large primes.\\\\
+\textbf{Man-in-the-Middle Attack}\\\\
+The man-in-the-middle attack (MITM) is a significant threat in cryptographic systems. It occurs when an adversary, often called Darth, intercepts and modifies the communication between two parties, Alice and Bob, without their knowledge. Here's how it typically unfolds:
+
+\begin{enumerate}
+\item Alice sends a message to Bob, which is intercepted by Darth.
+\item Darth modifies the message and sends it to Bob, pretending to be Alice.
+\item Bob receives the message, believing it is from Alice, and responds.
+\item Darth intercepts Bob's response, modifies it, and sends it to Alice, pretending to be Bob.
+\end{enumerate}
+
+This attack can compromise the confidentiality and integrity of the communication, allowing Darth to gain unauthorized access to sensitive information.
+
+\end{document}
