@@ -8,7 +8,7 @@ As you embark on your journey through IIIT Vadodara, remember that every challen
 This repository is my humble attempt to light up your path. It contains resources from the very first semester to the seventh – **exam questions, assignments, lab reports, and more.** Think of it as a legacy passed on from a senior who’s walked this road and deeply cares about your growth and success.  
 
 ### How to Use This Repository:
-- Dive into the resources semester-wise.
+- Dive into the resources course-wise.
 - Use them to prepare for exams, complete assignments, and practice lab exercises.
 - Share this repository with your peers to help everyone excel together!  
 
